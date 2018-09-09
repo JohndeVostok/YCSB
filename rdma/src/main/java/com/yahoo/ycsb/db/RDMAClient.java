@@ -35,6 +35,9 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.Vector;
 
+import java.io.FileReader;
+import java.io.FileWriter;
+
 /**
  * YCSB binding for <a href="http://redis.io/">Redis</a>.
  *
@@ -45,18 +48,17 @@ public class RDMAClient extends DB {
   //use fifo for Redis-cli
   //private JedisCommands jedis;
 
-  public static final String HOST_PROPERTY = "redis.host";
-  public static final String PORT_PROPERTY = "redis.port";
-  //public static final String PASSWORD_PROPERTY = "redis.password";
-  //public static final String CLUSTER_PROPERTY = "redis.cluster";
+  public static final String FIFO1 = "~/work/fifo1";
+  public static final String FIFO2 = "~/work/fifo2";
 
-  //public static final String INDEX_KEY = "_indices";
+  private FileReader reader = null;
+  private FileWriter writer = null;
 
   public void init() throws DBException {
-    Properties props = getProperties();
-    String host = props.getProperty(HOST_PROPERTY);
-    String portString = props.getProperty(PORT_PROPERTY);
-    int port = Integer.parseInt(portString);
+    File fifo1 = new File(FIFO1);
+    File fifo2 = new File(FIFO2);
+    writer = new FileWriter(fifo1);
+    reader = new FileReader(fifo2);
   }
 
   public void cleanup() throws DBException {
@@ -72,18 +74,30 @@ public class RDMAClient extends DB {
     return key.hashCode();
   }
 
-  // XXX jedis.select(int index) to switch to `table`
-
   @Override
   public Status read(String table, String key, Set<String> fields,
       Map<String, ByteIterator> result) {
-    return Status.OK;
+	char[] str = new char[50];
+    writer.write("PING");
+    reader.read(str);
+    if ((String)str.equal("PONG")) {
+      return Status.OK;
+    } else {
+      return Status.ERROR;
+    }
   }
 
   @Override
   public Status insert(String table, String key,
       Map<String, ByteIterator> values) {
-    return Status.OK;
+	char[] str = new char[50];
+    writer.write("PING");
+    reader.read(str);
+    if ((String)str.equal("PONG")) {
+      return Status.OK;
+    } else {
+      return Status.ERROR;
+    }
   }
 
   @Override
